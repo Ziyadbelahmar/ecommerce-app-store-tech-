@@ -78,9 +78,6 @@ export default function Navbar() {
           <Link to="/products" style={styles.navLink}>
             Products
           </Link>
-          <Link to="/deals" style={styles.navLink}>
-            Deals
-          </Link>
           <Link to="/about" style={styles.navLink}>
             About
           </Link>

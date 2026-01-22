@@ -18,7 +18,6 @@ import {
 } from "react-icons/fi";
 import { AiFillStar, AiOutlineStar } from "react-icons/ai";
 
-
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,12 +30,11 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [isWishlisted, setIsWishlisted] = useState(false);
-
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     fetchProduct();
   }, [id]);
-
 
   const fetchProduct = async () => {
     try {
@@ -48,7 +46,6 @@ export default function ProductDetails() {
       setLoading(false);
     }
   };
-
 
   const handleAddToCart = () => {
     if (product) {
@@ -66,7 +63,6 @@ export default function ProductDetails() {
       });
     }
   };
-
 
   const handleBuyNow = () => {
     if (product) {
@@ -86,24 +82,41 @@ export default function ProductDetails() {
     }
   };
 
+  // ✅ Fonction pour gérer les erreurs d'images
+  const handleImageError = (e) => {
+    e.target.src = "https://via.placeholder.com/600/0f0f0f/c4ff0d?text=No+Image";
+    setImageError(true);
+  };
 
   if (loading) {
     return (
       <div style={styles.loadingContainer}>
+        <style>{keyframesCSS}</style>
         <div style={styles.spinner}></div>
         <p style={styles.loadingText}>Loading product details...</p>
       </div>
     );
   }
 
-
   if (!product) {
     return (
       <div style={styles.errorContainer}>
+        <style>{keyframesCSS}</style>
         <div style={styles.errorIcon}>⚠️</div>
         <h2 style={styles.errorTitle}>Product Not Found</h2>
         <p style={styles.errorText}>The product you're looking for doesn't exist</p>
-        <button onClick={() => navigate("/")} style={styles.backBtn}>
+        <button 
+          onClick={() => navigate("/")} 
+          style={styles.backBtn}
+          onMouseEnter={(e) => {
+            e.target.style.transform = "scale(1.05)";
+            e.target.style.boxShadow = "0 6px 25px rgba(196, 255, 13, 0.4)";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = "scale(1)";
+            e.target.style.boxShadow = "none";
+          }}
+        >
           <FiChevronLeft style={{ marginRight: "8px" }} />
           Back to Home
         </button>
@@ -111,24 +124,38 @@ export default function ProductDetails() {
     );
   }
 
-
-  const images = product.images || ["https://via.placeholder.com/600"];
+  const images = product.images && product.images.length > 0 
+    ? product.images 
+    : ["https://via.placeholder.com/600/0f0f0f/c4ff0d?text=No+Image"];
   const rating = product.rating || 4.8;
-
+  const discountPercentage = product.originalPrice && product.originalPrice > product.price
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
 
   return (
     <div style={styles.page}>
       <style>{keyframesCSS}</style>
 
-
       {/* Back Button */}
       <div style={styles.backButtonContainer}>
-        <button onClick={() => navigate("/")} style={styles.backNavBtn}>
+        <button 
+          onClick={() => navigate("/")} 
+          style={styles.backNavBtn}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = "#1a1a1a";
+            e.target.style.borderColor = "#c4ff0d";
+            e.target.style.color = "#c4ff0d";
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = "#0f0f0f";
+            e.target.style.borderColor = "#1a1a1a";
+            e.target.style.color = "#fff";
+          }}
+        >
           <FiChevronLeft style={{ fontSize: "20px" }} />
           <span>Back to Products</span>
         </button>
       </div>
-
 
       <div style={styles.container}>
         {/* Product Section */}
@@ -141,18 +168,18 @@ export default function ProductDetails() {
                 src={images[selectedImage]} 
                 alt={product.name}
                 style={styles.mainImage}
+                onError={handleImageError}
               />
               
               {/* Badges */}
               <div style={styles.badgesContainer}>
-                {product.originalPrice && product.originalPrice > product.price && (
+                {discountPercentage > 0 && (
                   <span style={styles.saleBadge}>
-                    -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                    -{discountPercentage}% OFF
                   </span>
                 )}
                 <span style={styles.newBadge}>NEW</span>
               </div>
-
 
               {/* Wishlist Button */}
               <button 
@@ -170,11 +197,22 @@ export default function ProductDetails() {
                   ...styles.wishlistBtnFloat,
                   ...(isWishlisted && styles.wishlistBtnFloatActive)
                 }}
+                onMouseEnter={(e) => {
+                  if (!isWishlisted) {
+                    e.target.style.borderColor = "#c4ff0d";
+                    e.target.style.color = "#c4ff0d";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isWishlisted) {
+                    e.target.style.borderColor = "#1a1a1a";
+                    e.target.style.color = "#fff";
+                  }
+                }}
               >
                 <FiHeart style={{ fontSize: "22px" }} />
               </button>
             </div>
-
 
             {/* Thumbnails */}
             {images.length > 1 && (
@@ -187,14 +225,28 @@ export default function ProductDetails() {
                       ...styles.thumbnail,
                       ...(selectedImage === index && styles.thumbnailActive)
                     }}
+                    onMouseEnter={(e) => {
+                      if (selectedImage !== index) {
+                        e.currentTarget.style.borderColor = "#c4ff0d50";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedImage !== index) {
+                        e.currentTarget.style.borderColor = "#1a1a1a";
+                      }
+                    }}
                   >
-                    <img src={img} alt={`View ${index + 1}`} style={styles.thumbnailImg} />
+                    <img 
+                      src={img} 
+                      alt={`View ${index + 1}`} 
+                      style={styles.thumbnailImg}
+                      onError={handleImageError}
+                    />
                   </div>
                 ))}
               </div>
             )}
           </div>
-
 
           {/* Right: Product Info */}
           <div style={styles.infoColumn}>
@@ -204,10 +256,8 @@ export default function ProductDetails() {
               <span style={styles.categoryBadge}>{product.category}</span>
             </div>
 
-
             {/* Product Name */}
             <h1 style={styles.productName}>{product.name}</h1>
-
 
             {/* Rating & Reviews */}
             <div style={styles.ratingRow}>
@@ -227,7 +277,6 @@ export default function ProductDetails() {
               <span style={styles.soldCount}>500+ Sold</span>
             </div>
 
-
             {/* Price Section */}
             <div style={styles.priceBox}>
               <div style={styles.priceMain}>
@@ -239,12 +288,11 @@ export default function ProductDetails() {
                 <div style={styles.priceSecondary}>
                   <span style={styles.originalPrice}>${product.originalPrice}.00</span>
                   <span style={styles.savingsText}>
-                    You save ${(product.originalPrice - product.price).toFixed(2)} ({Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%)
+                    You save ${(product.originalPrice - product.price).toFixed(2)} ({discountPercentage}%)
                   </span>
                 </div>
               )}
             </div>
-
 
             {/* Stock & Shipping Info */}
             <div style={styles.infoCards}>
@@ -271,14 +319,12 @@ export default function ProductDetails() {
               </div>
             </div>
 
-
             {/* Description */}
             <div style={styles.descriptionBox}>
               <p style={styles.descriptionText}>
                 {product.description || "Experience cutting-edge technology with this premium product. Designed for performance, built for reliability, and crafted with precision to exceed your expectations."}
               </p>
             </div>
-
 
             {/* Quantity Selector */}
             <div style={styles.quantityRow}>
@@ -287,8 +333,14 @@ export default function ProductDetails() {
                 <button 
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   style={styles.quantityBtn}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = "#1a1a1a"}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "#1a1a1a";
+                    e.target.style.color = "#c4ff0d";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "transparent";
+                    e.target.style.color = "#fff";
+                  }}
                 >
                   -
                 </button>
@@ -296,14 +348,19 @@ export default function ProductDetails() {
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
                   style={styles.quantityBtn}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = "#1a1a1a"}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = "transparent"}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = "#1a1a1a";
+                    e.target.style.color = "#c4ff0d";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = "transparent";
+                    e.target.style.color = "#fff";
+                  }}
                 >
                   +
                 </button>
               </div>
             </div>
-
 
             {/* Action Buttons */}
             <div style={styles.actionsRow}>
@@ -312,11 +369,13 @@ export default function ProductDetails() {
                 style={styles.buyNowBtn}
                 onMouseEnter={(e) => {
                   e.target.style.transform = "translateY(-2px)";
-                  e.target.style.boxShadow = "0 8px 30px rgba(196, 255, 13, 0.4)";
+                  e.target.style.boxShadow = "0 8px 30px rgba(196, 255, 13, 0.5)";
+                  e.target.style.backgroundColor = "#d4ff3d";
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.transform = "translateY(0)";
                   e.target.style.boxShadow = "0 4px 20px rgba(196, 255, 13, 0.3)";
+                  e.target.style.backgroundColor = "#c4ff0d";
                 }}
               >
                 Buy Now
@@ -327,17 +386,18 @@ export default function ProductDetails() {
                 onMouseEnter={(e) => {
                   e.target.style.backgroundColor = "#c4ff0d";
                   e.target.style.color = "#000";
+                  e.target.style.transform = "translateY(-2px)";
                 }}
                 onMouseLeave={(e) => {
                   e.target.style.backgroundColor = "transparent";
                   e.target.style.color = "#c4ff0d";
+                  e.target.style.transform = "translateY(0)";
                 }}
               >
                 <FiShoppingCart style={{ marginRight: "10px", fontSize: "20px" }} />
                 Add to Cart
               </button>
             </div>
-
 
             {/* Trust Badges */}
             <div style={styles.trustBadges}>
@@ -361,50 +421,42 @@ export default function ProductDetails() {
           </div>
         </div>
 
-
         {/* Tabs Section */}
         <div style={styles.tabsSection}>
           {/* Tab Headers */}
           <div style={styles.tabHeaders}>
-            <button
-              onClick={() => setActiveTab("description")}
-              style={{
-                ...styles.tabHeader,
-                ...(activeTab === "description" && styles.tabHeaderActive)
-              }}
-            >
-              Description
-            </button>
-            <button
-              onClick={() => setActiveTab("specifications")}
-              style={{
-                ...styles.tabHeader,
-                ...(activeTab === "specifications" && styles.tabHeaderActive)
-              }}
-            >
-              Specifications
-            </button>
-            <button
-              onClick={() => setActiveTab("reviews")}
-              style={{
-                ...styles.tabHeader,
-                ...(activeTab === "reviews" && styles.tabHeaderActive)
-              }}
-            >
-              Reviews
-              <span style={styles.tabBadge}>128</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("shipping")}
-              style={{
-                ...styles.tabHeader,
-                ...(activeTab === "shipping" && styles.tabHeaderActive)
-              }}
-            >
-              Shipping & Returns
-            </button>
+            {["description", "specifications", "reviews", "shipping"].map((tab) => {
+              const tabNames = {
+                description: "Description",
+                specifications: "Specifications",
+                reviews: "Reviews",
+                shipping: "Shipping & Returns"
+              };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    ...styles.tabHeader,
+                    ...(activeTab === tab && styles.tabHeaderActive)
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== tab) {
+                      e.target.style.color = "#c4ff0d80";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== tab) {
+                      e.target.style.color = "#666";
+                    }
+                  }}
+                >
+                  {tabNames[tab]}
+                  {tab === "reviews" && <span style={styles.tabBadge}>128</span>}
+                </button>
+              );
+            })}
           </div>
-
 
           {/* Tab Content */}
           <div style={styles.tabContentBox}>
@@ -427,7 +479,6 @@ export default function ProductDetails() {
               </div>
             )}
 
-
             {activeTab === "specifications" && (
               <div style={styles.tabPane}>
                 <h3 style={styles.tabTitle}>Technical Specifications</h3>
@@ -436,13 +487,24 @@ export default function ProductDetails() {
                     { label: "Brand", value: product.brand },
                     { label: "Model", value: product.name },
                     { label: "Category", value: product.category },
+                    { label: "Price", value: `$${product.price}` },
+                    { label: "Stock", value: product.stock ? `${product.stock} units` : "In Stock" },
                     { label: "Warranty", value: "2 Years Manufacturer Warranty" },
-                    { label: "Dimensions", value: "To be specified" },
-                    { label: "Weight", value: "To be specified" },
+                    { label: "Dimensions", value: "Standard size" },
+                    { label: "Weight", value: "Lightweight design" },
                     { label: "Color Options", value: "Multiple available" },
                     { label: "Package Contents", value: "Product, Manual, Accessories" }
                   ].map((spec, index) => (
-                    <div key={index} style={styles.specRow}>
+                    <div 
+                      key={index} 
+                      style={styles.specRow}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#1a1a1a";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "#000";
+                      }}
+                    >
                       <span style={styles.specLabel}>{spec.label}</span>
                       <span style={styles.specValue}>{spec.value}</span>
                     </div>
@@ -450,7 +512,6 @@ export default function ProductDetails() {
                 </div>
               </div>
             )}
-
 
             {activeTab === "reviews" && (
               <div style={styles.tabPane}>
@@ -462,7 +523,6 @@ export default function ProductDetails() {
                 </div>
               </div>
             )}
-
 
             {activeTab === "shipping" && (
               <div style={styles.tabPane}>
@@ -504,7 +564,6 @@ export default function ProductDetails() {
   );
 }
 
-
 // ==================== KEYFRAMES ====================
 const keyframesCSS = `
   @keyframes spin {
@@ -523,8 +582,11 @@ const keyframesCSS = `
     0%, 100% { opacity: 1; }
     50% { opacity: 0.8; }
   }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(196, 255, 13, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(196, 255, 13, 0.5); }
+  }
 `;
-
 
 // ==================== STYLES ====================
 const styles = {
@@ -534,7 +596,6 @@ const styles = {
     paddingTop: "90px",
     paddingBottom: "100px"
   },
-
 
   // Back Button
   backButtonContainer: {
@@ -557,13 +618,11 @@ const styles = {
     transition: "all 0.3s ease"
   },
 
-
   container: {
     maxWidth: "1400px",
     margin: "0 auto",
     padding: "0 40px"
   },
-
 
   // ========== PRODUCT SECTION ==========
   productSection: {
@@ -573,7 +632,6 @@ const styles = {
     marginBottom: "100px",
     animation: "fadeIn 0.8s ease-out"
   },
-
 
   // Gallery Column
   galleryColumn: {
@@ -648,11 +706,13 @@ const styles = {
   wishlistBtnFloatActive: {
     backgroundColor: "#c4ff0d",
     borderColor: "#c4ff0d",
-    color: "#000"
+    color: "#000",
+    animation: "glow 2s ease-in-out infinite"
   },
   thumbnailsRow: {
     display: "flex",
-    gap: "16px"
+    gap: "16px",
+    flexWrap: "wrap"
   },
   thumbnail: {
     width: "120px",
@@ -676,7 +736,6 @@ const styles = {
     height: "100%",
     objectFit: "contain"
   },
-
 
   // Info Column
   infoColumn: {
@@ -722,7 +781,8 @@ const styles = {
   ratingRow: {
     display: "flex",
     alignItems: "center",
-    gap: "12px"
+    gap: "12px",
+    flexWrap: "wrap"
   },
   starsContainer: {
     display: "flex",
@@ -786,7 +846,8 @@ const styles = {
   priceSecondary: {
     display: "flex",
     alignItems: "center",
-    gap: "16px"
+    gap: "16px",
+    flexWrap: "wrap"
   },
   originalPrice: {
     fontSize: "20px",
@@ -935,7 +996,6 @@ const styles = {
     color: "#888"
   },
 
-
   // ========== TABS ==========
   tabsSection: {
     animation: "fadeIn 1s ease-out 0.4s backwards"
@@ -944,7 +1004,8 @@ const styles = {
     display: "flex",
     gap: "8px",
     marginBottom: "0",
-    borderBottom: "1px solid #1a1a1a"
+    borderBottom: "1px solid #1a1a1a",
+    flexWrap: "wrap"
   },
   tabHeader: {
     display: "flex",
@@ -1025,7 +1086,8 @@ const styles = {
     justifyContent: "space-between",
     padding: "20px",
     backgroundColor: "#000",
-    borderRadius: "12px"
+    borderRadius: "12px",
+    transition: "all 0.2s ease"
   },
   specLabel: {
     fontSize: "15px",
@@ -1035,7 +1097,8 @@ const styles = {
   specValue: {
     fontSize: "15px",
     fontWeight: "600",
-    color: "#fff"
+    color: "#fff",
+    textAlign: "right"
   },
   reviewsPlaceholder: {
     textAlign: "center",
@@ -1076,7 +1139,6 @@ const styles = {
     lineHeight: "1.6"
   },
 
-
   // ========== LOADING & ERROR ==========
   loadingContainer: {
     minHeight: "100vh",
@@ -1116,12 +1178,14 @@ const styles = {
   errorTitle: {
     fontSize: "36px",
     fontWeight: "800",
-    color: "#fff"
+    color: "#fff",
+    textAlign: "center"
   },
   errorText: {
     fontSize: "18px",
     color: "#666",
-    marginBottom: "16px"
+    marginBottom: "16px",
+    textAlign: "center"
   },
   backBtn: {
     display: "flex",

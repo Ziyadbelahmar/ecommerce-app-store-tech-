@@ -12,7 +12,8 @@ import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout";
 import MyOrders from "./pages/MyOrders";
 import Wishlist from "./pages/Wishlist";
-import AdminDashboard from "./pages/AdminDashboard"; // ⬅️ AJOUTER
+import AdminDashboard from "./pages/AdminDashboard"; 
+
 
 function App() {
   return (
